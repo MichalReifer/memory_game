@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>memory game</title>
+</head>
+<body>
+    <h1>The Memory Game</h1>
+    <div id='control'>
+        <div class="dropdown">
+            <!-- <button id='start-button' onclick="startGame()" >Start Game</button> -->
+            <button id='start-button' >Start Game</button>
+            <div class="levels-list">
+              <p onclick="quantity(12)">12 Cards</p>
+              <p onclick="quantity(18)">18 Cards</p>
+              <p onclick="quantity(24)">24 Cards</p>
+              <p onclick="quantity(30)">30 Cards</p>
+            </div>
+        </div>
+        <!-- <button id='pause' onclick="pause()">Pause</button> -->
+        <button id='pause'>Pause</button>
+    </div>
+    <div id='info'>
+        <h2 id='mistakes'>Mistakes: 0</h2>
+        <h2 id='timer'>0:00</h2>
+    </div>
+    <h2 id ='message'></h2>
+    <div id='board'>
+    </div>
+    <script
+  src="https://code.jquery.com/jquery-3.6.0.js"
+  integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+  crossorigin="anonymous"></script>
+    <script type='module' src='js_jquery/main.js'></script>
+</body>
+</html>
