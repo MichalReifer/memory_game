@@ -1,19 +1,15 @@
-// variables:
-var pauseGame = false;
-var numOfCards = 12;
-var cards = [...Array(12).keys()];
-var cardColor = ' #2980b9';
-var revealed = [];
-var hidden = [];
-var countMistakes = 0;
+import {Card} from './card.js';
+
+export var pauseGame = false;
+export let revealed = [];
+var removed = [];
+var numOfCards;
 var time;
-var timer = document.getElementById("timer");
-var buttonStart = document.getElementById("btnstart");
-var start = false;
-var message = document.getElementById("message");
+var sec;
+var min;
+var countMistakes = 0;
 var messageTime = 1500;
 var board = document.getElementById("board");
-var width = '753px';
 var images = [ 
     'images\\arrow.jpg',
     'images\\circle.png',
@@ -29,39 +25,17 @@ var images = [
     'images\\sqr.png',
     'images\\star.png',
     'images\\triangle.png',
-    'images\\trpz.png'];
+    'images\\trpz.png'
+];
 
 
-
-/* When the user clicks on the button, 
-toggle between hiding and showing the dropdown content */
+/* when clicking this button, toggle between hiding and showing the list of number of cards */
 function startGame() {
     document.getElementsByClassName("levels-list")[0].classList.toggle("show");
   }
+window.startGame = startGame;
 
-// select the number of cards for the game
-function quantity(num){
-    numOfCards = num;
-    document.getElementById('start-button').innerHTML = 'Cards: '+numOfCards;
-    cards = [...Array(numOfCards).keys()];
-    switch(numOfCards){
-        case 12:
-            width = '753px';
-            break;
-        case 18:
-            width = '1117px';
-            break;
-        case 24:
-            width = '1481px';
-            break;
-        case 30:
-            width = '1845px';
-            break;
-    }
-    startOrStopGame()
-}
-
-// Close the dropdown if the user clicks outside of it
+// close the list if the user clicks outside of it
 window.onclick = function(event) {
     if (!event.target.matches('#start-button')) {
       var dropdowns = document.getElementsByClassName("levels-list");
@@ -74,37 +48,76 @@ window.onclick = function(event) {
     }
 }  
 
-// start or restart the game
-function startOrStopGame(){
-    start = true;
+// when clicking the selected number of cards - Start Game: 
+// arrange/rearrange board, start/restart timer and reset variables
+function quantity(num){
+
+    arrangeBoard(num);
+
+    // change buttons and show timer and mistakes:
+    document.getElementById('start-button').innerHTML = 'Cards: '+num;
+    document.getElementById('pause').style.backgroundColor = ' #3498DB';
     document.getElementById('info').children[0].style.visibility = 'visible';
     document.getElementById('info').children[1].style.visibility = 'visible';
-    timer.innerHTML= "0:00";
+
+    // reset variables
+    revealed = [];
+    removed = [];
+    pauseGame = false;
+
+    // reset mistakes:
     document.getElementById('mistakes').innerHTML='Mistakes: 0';
-    arrangeBoard();
+    countMistakes=0;
+
+    // start or restart timer:
+    timer.innerHTML= "0:00";
     sec=0;
     min=0;
     clearInterval(time);
     time = false;
-    pauseGame = false;
-    document.getElementById('pause').style.backgroundColor = ' #3498DB';
     time = setInterval(countTime, 1000);
-    suffleCards();
-    resetCards();
-}
 
-function arrangeBoard(){
-    board.style.maxWidth = width;
+}
+window.quantity = quantity;
+
+// set size of board, create cards and attach their images, and shuffle cards.
+function arrangeBoard(num){
+    numOfCards = num;
+    switch(numOfCards){
+        case 12:
+            board.style.maxWidth = '753px';
+            break;
+        case 18:
+            board.style.maxWidth = '1117px';
+            break;
+        case 24:
+            board.style.maxWidth = '1481px';
+            break;
+        case 30:
+            board.style.maxWidth = '1845px';
+            break;
+    }
+
+    // clean board, create cards and attach their images:
+    var numOfImages=numOfCards/2;
+    var cards = [];
+    for (var i=0; i<numOfImages; i++){
+        var card1 = new Card(i);            
+        var card2 = new Card(i+numOfImages);
+        card1.attachImage(images[i]);
+        card2.attachImage(images[i]);
+        cards.push(card1, card2);
+    }
+
+    // shuffle cards and set them on the board:
     board.innerHTML = '';
+    cards = cards.sort(() => Math.random() - 0.5);
     for (var i=0; i<numOfCards; i++){
-        var card = document.createElement('div');
-        card.setAttribute("id", "_"+i);
-        card.setAttribute("class", "card");
-        card.setAttribute("onclick", 'revealCard("_'+i+'")');
-        board.appendChild(card);
+        board.appendChild(cards[i].element);
     }
 }
 
+// time function
 function countTime(){
     sec++;
     if (sec>59){
@@ -122,111 +135,60 @@ function countTime(){
     }
 }
 
-function resetCards(){
-    revealed = [];
-    hidden = [];
-    countMistakes=0;
-    for (var i=0; i<cards.length; i++){
-        var card = document.getElementById("_"+cards[i]);
-        var image = card.firstElementChild;
-        card.style.visibility = "visible";
-        card.style.backgroundColor = cardColor;
-        image.style.visibility = "hidden";    
-    }
-}
-
-// suffle and attach images to cards:
-function suffleCards(){
-    cards = cards.sort(() => Math.random() - 0.5);
-    var numOfImages=numOfCards/2;
-    for (var i=0; i<numOfImages; i++){
-        card_1 = document.getElementById("_"+cards[i]);
-        card_2 = document.getElementById("_"+cards[i+numOfImages]);
-        card_1.innerHTML = '';
-        card_2.innerHTML = '';
-        var image1 = document.createElement('img');
-        var image2 = document.createElement('img');
-        image1.setAttribute("src", images[i]);
-        image2.setAttribute("src", images[i]);
-        card_1.appendChild(image1);
-        card_2.appendChild(image2);
-    }
-}
-
+// when clicking the pause button - time stops and can't reveal any card
 function pause(){
-    if (start==true){
-        if (pauseGame == false ){
-            clearInterval(time);
-            time = false;
-            pauseGame = true;
-            event.target.style.backgroundColor = 'darkblue';
-        } else{
-            time = setInterval(countTime, 1000);
-            pauseGame=false;
-            event.target.style.backgroundColor = ' #3498DB';
-        }
+    if (pauseGame == false ){
+        clearInterval(time);
+        time = false;
+        pauseGame = true;
+        event.target.style.backgroundColor = 'darkblue';
+    } else{
+        time = setInterval(countTime, 1000);
+        pauseGame=false;
+        event.target.style.backgroundColor = ' #3498DB';
+    }
+}
+window.pause = pause;
+
+// compare after revealing 2 cards
+export function compareCards(){
+    if (revealed[0].image.getAttribute("src")==revealed[1].image.getAttribute("src")) {
+        message.innerHTML="Very Good!";
+        setTimeout(removeCards, messageTime);
+    } else {
+        message.innerHTML="Almost... try again.";
+        countMistakes++;
+        document.getElementById('mistakes').innerHTML= 'Mistakes: '+ countMistakes;
+        setTimeout(turnBackOver, messageTime);
     }
 }
 
-// reveal a card on click:
-function revealCard(id){
-    var card = document.getElementById(id);
-    if (revealed.length < 2 & start == true & pauseGame==false
-            & card.style.backgroundColor != "white") {
-        card.style.backgroundColor = "white";
-        card.children[0].style.visibility = "visible";
-        revealed.push(id);
-        if (revealed.length == 2){
-            compareCards();
-        }   
-    }
-}
-
-// compare after revealing 2 cards:
-function compareCards(){
-        card1 = document.getElementById(revealed[0]);
-        card2 = document.getElementById(revealed[1]);
-        image1 = card1.children[0];
-        image2 = card2.children[0];
-        // if cards match:
-        if (image1.getAttribute("src")==image2.getAttribute("src")) {
-            message.innerHTML="Very Good!";
-            setTimeout(removeCards, messageTime);
-        // if cards don't match:
-        } else {
-            countMistakes++;
-            document.getElementById('mistakes').innerHTML= 'Mistakes: '+ countMistakes;
-            message.innerHTML="Almost... try again.";
-            setTimeout(turnBackOver, messageTime);
-        }
-        // wait until cards are removed/turned over to enable revealing another card:
-        setTimeout(function(){revealed = [];}, messageTime);
-}
-
-// if cards don't match, turn them back over:
+// if cards don't match, turn them back over
 function turnBackOver(){
     message.innerHTML = '';
-    card1.style.backgroundColor = cardColor;
-    image1.style.visibility = "hidden";
-    card2.style.backgroundColor = cardColor;
-    image2.style.visibility = "hidden";
+    revealed[0].hideCard();
+    revealed[1].hideCard();
+    revealed = [];
 }
 
-// if cards match, remove them:
+// if cards match, remove them.
 function removeCards(){
     message.innerHTML = '';
-    card1.style.visibility = "hidden";
-    card2.style.visibility = "hidden";
-    image1.style.visibility = "hidden";
-    image2.style.visibility = "hidden";
-    hidden.push(revealed[0], revealed[1]);
-    // if all cards were removed, show end of game message:
-    if (hidden.length == numOfCards){
-        board.innerHTML = "";
-        var endMessage = document.createElement('h1');
-        endMessage.setAttribute("id", 'end-message');
-        endMessage.appendChild(document.createTextNode("Well Done!"));
-        board.appendChild(endMessage);
-        clearInterval(time);
+    revealed[0].removeCard();
+    revealed[1].removeCard();
+    removed.push(revealed[0], revealed[1]);
+    if (removed.length == numOfCards){
+        gameOver();
     }
+    revealed = [];
+}
+
+// if all cards are removed, time stops and Well Done message appears
+function gameOver(){
+    board.innerHTML = "";
+    var endMessage = document.createElement('h1');
+    endMessage.setAttribute("id", 'end-message');
+    endMessage.appendChild(document.createTextNode("Well Done!"));
+    board.appendChild(endMessage);
+    clearInterval(time);
 }
