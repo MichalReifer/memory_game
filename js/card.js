@@ -1,5 +1,5 @@
 import {compareCards, revealed, pauseGame} from './main.js';
-
+// test
 export class Card {
     constructor(id){
     this.state = 'Hidden';
